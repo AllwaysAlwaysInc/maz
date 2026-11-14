@@ -70,6 +70,28 @@
           <input id="auto-watch-toggle" type="checkbox" checked class="accent-indigo-600 w-3.5 h-3.5" />
           <span>Auto-Watch (30s)</span>
         </label>
+        <button id="admin-lock-btn" onclick="handleAdminButton()" class="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 border border-slate-300 text-slate-700 font-bold transition">
+          🔒 Admin Locked
+        </button>
+      </div>
+    </div>
+
+    <!-- Founder Admin Login Modal (Server-Verified, Zero Client Secrets) -->
+    <div id="admin-login-modal" class="hidden fixed inset-0 z-50 bg-slate-900/50 flex items-center justify-center p-4">
+      <div class="bg-white border border-slate-200 rounded-2xl shadow-xl max-w-sm w-full p-5 space-y-4">
+        <div class="flex items-center justify-between">
+          <h3 class="text-base font-extrabold text-slate-900">🔐 Founder Admin Unlock</h3>
+          <button onclick="closeAdminModal()" class="text-slate-400 hover:text-slate-700 text-sm font-bold">✕</button>
+        </div>
+        <p class="text-xs text-slate-500">Required to modify SentryGuard risk caps, Kill-Switch, or issue Watchdog client keys.</p>
+        <div class="space-y-2.5">
+          <input id="admin-email" type="email" placeholder="Founder email" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-900" />
+          <input id="admin-pass" type="password" placeholder="Founder passcode" onkeydown="if(event.key==='Enter') submitAdminLogin()" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-900" />
+        </div>
+        <div class="flex gap-2">
+          <button onclick="closeAdminModal()" class="flex-1 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold">Cancel</button>
+          <button onclick="submitAdminLogin()" class="flex-1 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold shadow-sm">Unlock</button>
+        </div>
       </div>
     </div>
 
@@ -156,6 +178,10 @@
                 <option value="BTC">BTC</option>
                 <option value="SOL">SOL</option>
                 <option value="POL">POL</option>
+                <option value="AVAX">AVAX</option>
+                <option value="LINK">LINK</option>
+                <option value="DOGE">DOGE</option>
+                <option value="XRP">XRP</option>
                 <option value="CROW">CROW</option>
               </select>
             </div>
@@ -520,11 +546,56 @@
     const CLOUD_NODE_URL = "https://urfhlxdlanncpfqtdkvb.supabase.co/functions/v1/crow-chain";
     const IS_CLOUD_DIRECT = window.location.protocol === "file:";
 
+    function getAdminToken() {
+      try { return sessionStorage.getItem("crow_admin_token") || ""; } catch { return ""; }
+    }
+    function updateAdminBadge() {
+      const btn = document.getElementById("admin-lock-btn");
+      if (!btn) return;
+      const unlocked = !!getAdminToken();
+      btn.textContent = unlocked ? "🔓 Founder Unlocked" : "🔒 Admin Locked";
+      btn.className = unlocked
+        ? "px-2.5 py-1 rounded-lg bg-emerald-50 hover:bg-emerald-100 border border-emerald-300 text-emerald-700 font-bold transition"
+        : "px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 border border-slate-300 text-slate-700 font-bold transition";
+    }
+    function handleAdminButton() {
+      if (getAdminToken()) {
+        try { sessionStorage.removeItem("crow_admin_token"); } catch {}
+        updateAdminBadge();
+        showStatus("Founder Admin locked.", true);
+      } else {
+        openAdminModal();
+      }
+    }
+    function openAdminModal() {
+      document.getElementById("admin-login-modal")?.classList.remove("hidden");
+      document.getElementById("admin-email")?.focus();
+    }
+    function closeAdminModal() {
+      document.getElementById("admin-login-modal")?.classList.add("hidden");
+    }
+    async function submitAdminLogin() {
+      const email = document.getElementById("admin-email").value.trim();
+      const passcode = document.getElementById("admin-pass").value;
+      const res = await api("/api/admin/login", "POST", { email, passcode });
+      if (res.ok && res.adminToken) {
+        try { sessionStorage.setItem("crow_admin_token", res.adminToken); } catch {}
+        document.getElementById("admin-pass").value = "";
+        closeAdminModal();
+        updateAdminBadge();
+        showStatus(`Founder Admin unlocked for ${res.email} (12h session).`, true);
+      } else {
+        showStatus(res.error || "Invalid Founder credentials", false);
+      }
+    }
+
     async function api(path, method = "GET", body = null) {
       const target = IS_CLOUD_DIRECT
         ? `${CLOUD_NODE_URL}${path.replace(/^\/api/, "")}`
         : path;
       const opts = { method, headers: {} };
+      const tok = getAdminToken();
+      if (tok) opts.headers["x-admin-token"] = tok;
       if (body) {
         opts.headers["Content-Type"] = "application/json";
         opts.body = JSON.stringify(body);
@@ -532,6 +603,7 @@
       const r = await fetch(target, opts);
       return await r.json();
     }
+    updateAdminBadge();
 
     async function refreshState() {
       STATE = await api("/api/state");
@@ -544,7 +616,7 @@
 
       const pg = document.getElementById("price-grid");
       pg.innerHTML = "";
-      for (const sym of ["ETH", "BTC", "SOL", "POL", "USDC", "CROW"]) {
+      for (const sym of ["ETH", "BTC", "SOL", "POL", "AVAX", "LINK", "DOGE", "XRP", "USDC", "CROW"]) {
         const val = STATE.prices?.[sym];
         pg.innerHTML += `
           <div class="bg-slate-50 border border-slate-200 rounded-xl p-3">
@@ -670,6 +742,7 @@
         await refreshState();
       } else {
         showStatus(res.error || "Failed to issue client key", false);
+        if ((res.error || "").toLowerCase().includes("admin locked")) openAdminModal();
       }
     }
 
@@ -825,7 +898,7 @@
       let totalVal = usdCash + crowBal * Number(prices.CROW || 0);
 
       if (listEl) {
-        const assets = ["ETH", "BTC", "SOL", "POL", "CROW"];
+        const assets = ["ETH", "BTC", "SOL", "POL", "AVAX", "LINK", "DOGE", "XRP", "CROW"];
         listEl.innerHTML = assets.map(sym => {
           const price = Number(prices[sym] || 0);
           const qty = sym === "CROW"
@@ -946,12 +1019,18 @@
     }
 
     async function savePolicy() {
-      await api("/api/agent/policy", "POST", {
+      const res = await api("/api/agent/policy", "POST", {
         killSwitch: document.getElementById("kill-switch").checked,
         maxTradeUsd: parseFloat(document.getElementById("pol-max").value || "50"),
         dailyLimitUsd: parseFloat(document.getElementById("pol-daily").value || "200")
       });
-      showStatus("SentryGuard policy updated in Supabase.", true);
+      if (res.ok) {
+        showStatus("SentryGuard policy updated in Supabase.", true);
+      } else {
+        showStatus(res.error || "Admin locked", false);
+        openAdminModal();
+        await refreshState();
+      }
     }
 
     async function connectBrowserWallet() {
