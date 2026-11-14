@@ -1,0 +1,1244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AllwaysAlways Inc. • AgentKit Wallet, CROW Chain & Cloud SDK</title>
+  <link rel="icon" href="favicon.ico" sizes="any" />
+  <link rel="icon" type="image/png" href="app_icon.png" />
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-50 text-slate-900 min-h-screen font-sans antialiased">
+  <div class="max-w-7xl mx-auto p-4 sm:p-6 space-y-5">
+    <!-- Header -->
+    <header class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 bg-white border border-slate-200 shadow-sm rounded-2xl p-5">
+      <div class="flex items-start gap-4">
+        <img src="app_icon.png" alt="AllwaysAlways AgentKit Wallet" class="w-12 h-12 rounded-xl border border-slate-200 shadow-sm shrink-0" />
+        <div>
+          <div class="flex flex-wrap items-center gap-2">
+            <span class="px-2.5 py-0.5 text-xs font-bold rounded-full bg-indigo-50 text-indigo-700 border border-indigo-200">CROW CHAIN + BASE SEPOLIA</span>
+            <span id="cdp-badge" class="px-2.5 py-0.5 text-xs font-semibold rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">Checking CDP...</span>
+          </div>
+          <h1 class="text-xl sm:text-2xl font-extrabold mt-1.5 tracking-tight text-slate-900">AllwaysAlways Inc. — AgentKit Wallet &amp; Oracle</h1>
+          <p class="text-xs text-slate-500 mt-1">Supabase Cloud: <code class="text-emerald-700 font-semibold">allways-social-ledger</code> • Treasury: <code id="treasury-addr" class="text-indigo-600 font-semibold">...</code></p>
+        </div>
+      </div>
+      <div class="flex flex-wrap items-center gap-2">
+        <button onclick="connectBrowserWallet()" id="btn-connect-wallet" class="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-sm shadow-sm transition">
+          Connect MetaMask / Coinbase
+        </button>
+        <button onclick="switchToBaseSepolia()" class="px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold border border-slate-200 transition">
+          Switch to Base Sepolia
+        </button>
+        <a href="https://portal.cdp.coinbase.com/products/faucet" target="_blank" class="px-3 py-2 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 text-xs font-semibold transition">
+          Base Sepolia Faucet ↗
+        </a>
+      </div>
+    </header>
+
+    <!-- Connected Browser Wallet Bar -->
+    <div id="browser-wallet-bar" class="hidden bg-indigo-50 border border-indigo-200 rounded-xl p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+      <div>
+        <div class="text-xs text-indigo-700 font-semibold uppercase">Connected Browser Wallet</div>
+        <div class="font-mono text-sm mt-0.5 text-slate-800" id="bw-address"></div>
+      </div>
+      <div class="flex items-center gap-4">
+        <div class="text-right">
+          <div class="text-xs text-slate-500">Base Sepolia ETH</div>
+          <div class="font-bold text-emerald-700" id="bw-eth">--</div>
+        </div>
+        <button onclick="importBrowserWallet()" class="px-3 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold shadow-sm">
+          Sync Into CROW Ledger
+        </button>
+      </div>
+    </div>
+
+    <!-- Global Active Wallet Bar (Always Visible Across All Tabs) -->
+    <div class="bg-white border border-slate-200 shadow-sm rounded-2xl px-4 py-2.5 flex flex-wrap items-center justify-between gap-3">
+      <div class="flex flex-wrap items-center gap-2.5">
+        <span class="text-[11px] font-bold uppercase tracking-wider text-slate-500">Active Wallet</span>
+        <select id="global-wallet-select" onchange="syncGlobalWallet(this.value)" class="bg-slate-50 border border-slate-200 rounded-xl px-3 py-1.5 text-xs font-mono text-slate-800 max-w-xs sm:max-w-sm"></select>
+      </div>
+      <div class="flex flex-wrap items-center gap-3 text-xs">
+        <div class="px-2.5 py-1 rounded-lg bg-emerald-50 border border-emerald-200 font-bold text-emerald-700">
+          Test USD: <span id="global-usd">$0.00</span>
+        </div>
+        <div class="px-2.5 py-1 rounded-lg bg-amber-50 border border-amber-200 font-bold text-amber-700">
+          CROW: <span id="global-crow">0</span>
+        </div>
+        <label class="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-indigo-50 border border-indigo-200 text-indigo-700 font-semibold cursor-pointer">
+          <input id="auto-watch-toggle" type="checkbox" checked class="accent-indigo-600 w-3.5 h-3.5" />
+          <span>Auto-Watch (30s)</span>
+        </label>
+      </div>
+    </div>
+
+    <!-- Tab Navigation Bar -->
+    <nav class="flex flex-wrap items-center gap-2 bg-white border border-slate-200 shadow-sm rounded-2xl p-2" role="tablist">
+      <button onclick="switchTab('oracle')" id="tab-btn-oracle" class="tab-btn px-4 py-2 rounded-xl text-xs sm:text-sm font-bold bg-indigo-600 text-white shadow-sm transition">
+        📈 Oracle &amp; Trading
+      </button>
+      <button onclick="switchTab('wallets')" id="tab-btn-wallets" class="tab-btn px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold bg-slate-50 text-slate-600 hover:bg-slate-100 border border-slate-200 transition">
+        👛 Wallets &amp; CROW Faucet
+      </button>
+      <button onclick="switchTab('games')" id="tab-btn-games" class="tab-btn px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold bg-slate-50 text-slate-600 hover:bg-slate-100 border border-slate-200 transition">
+        🎮 AtAA Arcade &amp; Games
+      </button>
+      <button onclick="switchTab('chain')" id="tab-btn-chain" class="tab-btn px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold bg-slate-50 text-slate-600 hover:bg-slate-100 border border-slate-200 transition">
+        ⛓️ CROW Chain &amp; Integrity
+      </button>
+      <button onclick="switchTab('sdk')" id="tab-btn-sdk" class="tab-btn px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold bg-slate-50 text-slate-600 hover:bg-slate-100 border border-slate-200 transition">
+        📦 Cloud SDK &amp; API
+      </button>
+      <button onclick="switchTab('kit')" id="tab-btn-kit" class="tab-btn px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold bg-slate-50 text-slate-600 hover:bg-slate-100 border border-slate-200 transition">
+        🤖 Talk to Kit
+      </button>
+    </nav>
+
+    <div id="status-msg" class="text-xs rounded-xl p-3 hidden"></div>
+
+    <!-- TAB 1: ORACLE & TRADING -->
+    <div id="tab-panel-oracle" class="tab-panel space-y-5">
+      <section class="bg-white border border-slate-200 shadow-sm rounded-2xl p-4">
+        <div class="flex items-center justify-between mb-3">
+          <h2 class="text-xs font-bold uppercase tracking-wider text-slate-500">Live Pyth Price Oracle</h2>
+          <button onclick="refreshState()" class="text-xs font-semibold text-indigo-600 hover:underline">Refresh Live Prices</button>
+        </div>
+        <div id="price-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3"></div>
+      </section>
+
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-5">
+        <section class="lg:col-span-2 bg-white border border-slate-200 shadow-sm rounded-2xl p-5 space-y-3">
+          <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+            <div>
+              <h2 class="text-base font-bold text-slate-900">WallStreet / FinAI — Upcoming Trade Signals &amp; Why</h2>
+              <p class="text-xs text-slate-500">Live hourly RSI-14 + 7h/24h moving average crossover analysis explaining each upcoming BUY / SELL / HOLD setup.</p>
+            </div>
+            <button onclick="refreshState()" class="px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold border border-slate-200">Re-Scan Market</button>
+          </div>
+          <div id="signals-grid" class="grid grid-cols-1 md:grid-cols-2 gap-3"></div>
+
+          <div class="border-t border-slate-200 pt-4 space-y-2.5">
+            <div class="flex flex-wrap items-center justify-between gap-2">
+              <div>
+                <h3 class="text-sm font-bold text-slate-900">🎯 Live Trade Outcome Watcher (Custom Target / Stop)</h3>
+                <p class="text-[11px] text-slate-500">Wallet-exclusive watcher against live Pyth/Coinbase prices — settles TARGET_HIT or STOP_HIT on CROW Chain.</p>
+              </div>
+              <div class="flex flex-wrap items-center gap-1.5">
+                <button onclick="exportWalletReport('csv')" class="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 text-[11px] font-semibold">Export CSV</button>
+                <button onclick="exportWalletReport('json')" class="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 text-[11px] font-semibold">Export JSON</button>
+                <button onclick="checkTradeOutcomes()" class="px-2.5 py-1 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 text-[11px] font-bold">Check Outcomes Now</button>
+              </div>
+            </div>
+            <div id="outcome-stats-bar" class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs"></div>
+            <div id="outcome-watcher-grid" class="space-y-2 max-h-56 overflow-y-auto text-xs"></div>
+          </div>
+        </section>
+
+        <section class="bg-white border border-slate-200 shadow-sm rounded-2xl p-5 space-y-4">
+          <div class="flex items-center justify-between">
+            <h2 class="text-base font-bold text-slate-900">AgentKit Paper Trader</h2>
+            <span class="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">TESTNET SAFE</span>
+          </div>
+
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="text-xs text-slate-500 font-medium block mb-1">Action</label>
+              <select id="trade-side" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm text-slate-900">
+                <option value="BUY">BUY (Test USD → Asset)</option>
+                <option value="SELL">SELL (Asset → Test USD)</option>
+              </select>
+            </div>
+            <div>
+              <label class="text-xs text-slate-500 font-medium block mb-1">Asset (Pyth Feed)</label>
+              <select id="trade-asset" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm text-slate-900">
+                <option value="ETH">ETH</option>
+                <option value="BTC">BTC</option>
+                <option value="SOL">SOL</option>
+                <option value="POL">POL</option>
+                <option value="CROW">CROW</option>
+              </select>
+            </div>
+          </div>
+
+          <div>
+            <label class="text-xs text-slate-500 font-medium block mb-1">Order Size (USD)</label>
+            <input id="trade-usd" type="number" value="10" min="1" step="1" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm text-slate-900" />
+          </div>
+
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="text-[11px] text-emerald-700 font-semibold block mb-1">Take-Profit Target (+%)</label>
+              <input id="trade-target-pct" type="number" value="2" min="0.1" max="100" step="0.5" onchange="saveWalletTargets()" class="w-full bg-emerald-50/50 border border-emerald-200 rounded-xl px-3 py-1.5 text-sm font-semibold text-emerald-800" />
+            </div>
+            <div>
+              <label class="text-[11px] text-rose-700 font-semibold block mb-1">Stop-Loss (-%)</label>
+              <input id="trade-stop-pct" type="number" value="1" min="0.1" max="50" step="0.5" onchange="saveWalletTargets()" class="w-full bg-rose-50/50 border border-rose-200 rounded-xl px-3 py-1.5 text-sm font-semibold text-rose-800" />
+            </div>
+          </div>
+
+          <button onclick="runPaperTrade()" class="w-full py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-sm shadow-sm transition">
+            Execute Paper Trade &amp; Mine Block
+          </button>
+
+          <!-- Kit Autonomous Test Trader -->
+          <div class="bg-slate-50 border border-slate-200 rounded-xl p-3 space-y-2">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-bold text-indigo-700">🤖 Kit Auto-Trader (Test Mode)</span>
+              <label class="flex items-center gap-1.5 text-[11px] font-semibold text-slate-600 cursor-pointer">
+                <input id="kit-auto-loop" type="checkbox" onchange="toggleKitAutoLoop()" class="accent-indigo-600 w-3.5 h-3.5" />
+                Auto-Loop (30s)
+              </label>
+            </div>
+            <button onclick="runKitAutoTrade()" class="w-full py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-sm transition">
+              Let Kit Run 1 Auto Test Trade Now
+            </button>
+            <div id="kit-auto-log" class="text-[11px] text-slate-600">Idle — click above or enable Auto-Loop.</div>
+          </div>
+
+          <div class="border-t border-slate-200 pt-4 space-y-3">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-bold uppercase text-rose-600">AtAA SentryGuard Risk Caps</span>
+              <label class="flex items-center gap-2 text-xs cursor-pointer">
+                <input id="kill-switch" type="checkbox" onchange="savePolicy()" class="accent-rose-600 w-4 h-4" />
+                <span class="font-bold text-rose-600">Kill-Switch</span>
+              </label>
+            </div>
+            <div class="grid grid-cols-2 gap-2">
+              <div>
+                <label class="text-[11px] text-slate-500">Max Trade ($)</label>
+                <input id="pol-max" type="number" value="50" onchange="savePolicy()" class="w-full bg-slate-50 border border-slate-200 rounded-lg px-2 py-1.5 text-xs text-slate-900" />
+              </div>
+              <div>
+                <label class="text-[11px] text-slate-500">Daily Limit ($)</label>
+                <input id="pol-daily" type="number" value="200" onchange="savePolicy()" class="w-full bg-slate-50 border border-slate-200 rounded-lg px-2 py-1.5 text-xs text-slate-900" />
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+    </div>
+
+    <!-- TAB 2: WALLETS, HOLDINGS & TRADING -->
+    <div id="tab-panel-wallets" class="tab-panel hidden space-y-5">
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-5">
+        <!-- Left: Wallet Selector, Portfolio Total & Faucet -->
+        <section class="bg-white border border-slate-200 shadow-sm rounded-2xl p-5 space-y-4">
+          <div class="flex items-center justify-between">
+            <h2 class="text-base font-bold text-slate-900">Your Wallets</h2>
+            <span class="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200">PORTFOLIO</span>
+          </div>
+
+          <div class="bg-indigo-50 border border-indigo-200 rounded-xl p-4">
+            <div class="text-xs text-indigo-700 font-semibold uppercase">Total Wallet Value</div>
+            <div id="sel-total-usd" class="text-2xl font-extrabold text-slate-900 mt-1">$0.00</div>
+            <div class="flex items-center justify-between mt-2">
+              <code id="sel-addr-short" class="text-[11px] text-indigo-700 font-mono">Select a wallet</code>
+              <button onclick="copySelectedWallet()" class="text-[11px] font-bold text-indigo-600 hover:underline">Copy Address</button>
+            </div>
+          </div>
+
+          <div>
+            <label class="text-xs text-slate-500 font-medium block mb-1">Active Wallet</label>
+            <select id="wallet-select" onchange="onWalletSelect()" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-mono text-slate-800"></select>
+          </div>
+
+          <div class="grid grid-cols-2 gap-3 bg-slate-50 border border-slate-200 rounded-xl p-3">
+            <div>
+              <div class="text-[11px] text-slate-500 font-medium">Test USD Cash</div>
+              <div id="sel-usd" class="text-base font-extrabold text-emerald-600 mt-0.5">$0.00</div>
+            </div>
+            <div>
+              <div class="text-[11px] text-slate-500 font-medium">CROW Balance</div>
+              <div id="sel-crow" class="text-base font-extrabold text-amber-600 mt-0.5">0 CROW</div>
+            </div>
+          </div>
+
+          <button onclick="dripFaucet()" class="w-full py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-sm transition">
+            Top Up Faucet (+250 CROW &amp; +$50 Test USD)
+          </button>
+
+          <div class="border-t border-slate-200 pt-3 flex gap-2">
+            <input id="new-wallet-label" type="text" placeholder="New wallet label..." class="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-900" />
+            <button onclick="createTestWallet()" class="px-3 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs shadow-sm">
+              + Create
+            </button>
+          </div>
+        </section>
+
+        <!-- Middle & Right: Token Holdings + Quick Trade & Send CROW -->
+        <section class="lg:col-span-2 bg-white border border-slate-200 shadow-sm rounded-2xl p-5 space-y-5">
+          <div class="flex items-center justify-between">
+            <div>
+              <h2 class="text-base font-bold text-slate-900">Assets &amp; Instant Trade</h2>
+              <p class="text-xs text-slate-500">View every asset in your selected wallet and buy/sell directly using live Pyth prices.</p>
+            </div>
+            <button onclick="refreshState()" class="px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold border border-slate-200">Refresh</button>
+          </div>
+
+          <div id="wallet-assets-list" class="space-y-2"></div>
+
+          <!-- Send CROW to Another Wallet -->
+          <div class="border-t border-slate-200 pt-4 space-y-3">
+            <div class="text-xs font-bold uppercase text-slate-600">Send CROW to Another Wallet</div>
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
+              <select id="send-to-wallet" class="sm:col-span-2 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-mono text-slate-800"></select>
+              <div class="flex gap-2">
+                <input id="send-crow-amt" type="number" value="25" min="1" step="1" class="w-24 bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-2 text-xs text-slate-900" />
+                <button onclick="sendCrowTransfer()" class="flex-1 py-2 px-3 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold shadow-sm">Send</button>
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+    </div>
+
+    <!-- TAB 3: ATAA ARCADE & WEB GAMES -->
+    <div id="tab-panel-games" class="tab-panel hidden space-y-5">
+      <section class="bg-white border border-slate-200 shadow-sm rounded-2xl p-6 space-y-5">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+          <div>
+            <h2 class="text-lg font-bold text-slate-900">AllwaysAlways.net — Arcade &amp; Labs Hub</h2>
+            <p class="text-xs text-slate-500">Launch your live web games from <code class="text-indigo-600 font-semibold">allwaysalways.net</code> and test CROW rewards/spends against your active wallet.</p>
+          </div>
+          <a href="https://allwaysalways.net/#labs" target="_blank" class="px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold border border-slate-200">Open allwaysalways.net ↗</a>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div class="bg-slate-50 border border-slate-200 rounded-xl p-4 flex flex-col justify-between space-y-3">
+            <div>
+              <div class="text-base font-extrabold text-slate-900">🎰 A-Stack'd</div>
+              <p class="text-xs text-slate-600 mt-1">AllwaysAlways Arcade game connected to the CROW Chain economy.</p>
+            </div>
+            <a href="https://allwaysalways.net/astackd" target="_blank" class="text-center py-2 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold shadow-sm">Play A-Stack'd ↗</a>
+          </div>
+          <div class="bg-slate-50 border border-slate-200 rounded-xl p-4 flex flex-col justify-between space-y-3">
+            <div>
+              <div class="text-base font-extrabold text-slate-900">🗡️ MandalOz 3D</div>
+              <p class="text-xs text-slate-600 mt-1">3D Spatial Game Canvas &amp; Character Studio at play.allwaysalways.net.</p>
+            </div>
+            <a href="https://play.allwaysalways.net" target="_blank" class="text-center py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-sm">Launch MandalOz 3D ↗</a>
+          </div>
+          <div class="bg-slate-50 border border-slate-200 rounded-xl p-4 flex flex-col justify-between space-y-3">
+            <div>
+              <div class="text-base font-extrabold text-slate-900">🎯 Echo-Scout AI</div>
+              <p class="text-xs text-slate-600 mt-1">Lead &amp; Client Hunter Labs app integrated with the AtAA ecosystem.</p>
+            </div>
+            <a href="https://allwaysalways.net/job_scout" target="_blank" class="text-center py-2 rounded-lg bg-sky-600 hover:bg-sky-700 text-white text-xs font-bold shadow-sm">Open Echo-Scout AI ↗</a>
+          </div>
+        </div>
+
+        <div class="border-t border-slate-200 pt-4 space-y-3">
+          <div class="flex flex-wrap items-center justify-between gap-2">
+            <div>
+              <div class="text-xs font-bold uppercase text-indigo-700">AtAA Web Games ↔ CROW Bridge</div>
+              <p class="text-xs text-slate-500">Test any game rewarding or spending CROW on the active wallet (<code>POST /api/game/reward</code> &amp; <code>/api/game/spend</code>).</p>
+            </div>
+            <select id="game-bridge-select" class="bg-slate-50 border border-slate-200 rounded-lg px-3 py-1.5 text-xs font-medium text-slate-800">
+              <option value="MandalOz 3D">🗡️ MandalOz 3D</option>
+              <option value="A-Stack'd">🎰 A-Stack'd</option>
+              <option value="Echo-Scout AI">🎯 Echo-Scout AI</option>
+              <option value="Echo Game">🎮 Echo Game</option>
+            </select>
+          </div>
+          <div class="grid grid-cols-2 gap-3 max-w-md">
+            <button onclick="testGameCrow(true)" class="py-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-sm">+25 CROW Quest Win</button>
+            <button onclick="testGameCrow(false)" class="py-2.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-200 text-xs font-bold">-10 CROW Shop Buy</button>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <!-- TAB 4: CROW CHAIN & INTEGRITY -->
+    <div id="tab-panel-chain" class="tab-panel hidden space-y-5">
+      <section class="bg-white border border-slate-200 shadow-sm rounded-2xl p-6 space-y-4">
+        <div class="flex flex-wrap items-center justify-between gap-2">
+          <h2 class="text-lg font-bold text-slate-900">Supabase PoW Blocks &amp; Trades</h2>
+          <div class="flex items-center gap-2">
+            <button onclick="verifyChainIntegrity()" class="px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 border border-slate-200 text-slate-700 text-xs font-semibold">Verify Chain</button>
+            <button onclick="runStressTest(5000)" class="px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold shadow-sm">Simulate 5,000 Tx/s Batch</button>
+          </div>
+        </div>
+        <div id="chain-stress-box" class="hidden bg-slate-50 border border-slate-200 rounded-xl p-3.5 text-xs font-mono space-y-1"></div>
+        <div>
+          <h3 class="text-xs font-semibold uppercase text-slate-500 mb-2">GHOSTCROW Tokenomics Pools (1,000,000 CROW Supply)</h3>
+          <div id="tokenomics-grid" class="grid grid-cols-2 sm:grid-cols-5 gap-2.5 text-xs"></div>
+        </div>
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div>
+            <h3 class="text-xs font-semibold uppercase text-slate-500 mb-2">Recent Paper Trades</h3>
+            <div id="trades-list" class="space-y-2 max-h-72 overflow-y-auto text-xs"></div>
+          </div>
+          <div>
+            <h3 class="text-xs font-semibold uppercase text-slate-500 mb-2">Latest Mined Blocks (0000...)</h3>
+            <div id="blocks-list" class="space-y-2 max-h-72 overflow-y-auto text-xs font-mono"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- AtAA Watchdog Safety Engine -->
+      <section class="bg-white border border-slate-200 shadow-sm rounded-2xl p-6 space-y-4">
+        <div class="flex flex-wrap items-center justify-between gap-2">
+          <div>
+            <div class="flex items-center gap-2">
+              <h2 class="text-base font-bold text-slate-900">AtAA Watchdog Safety Engine</h2>
+              <span id="watchdog-shield-badge" class="px-2.5 py-0.5 text-[11px] font-bold rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">Shield Active (30 req/60s)</span>
+            </div>
+            <p class="text-xs text-slate-500 mt-0.5">Watches the CROW Chain for rate spikes, kill-switch triggers, broken blocks, and issues SHA-256 hashed client keys.</p>
+          </div>
+          <div class="flex items-center gap-2">
+            <input id="client-key-name" type="text" placeholder="Client/Game name (e.g. MandalOz 3D)" class="bg-slate-50 border border-slate-200 rounded-lg px-3 py-1.5 text-xs text-slate-900" />
+            <button onclick="issueClientKey()" class="px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold shadow-sm">+ Issue Client Key</button>
+          </div>
+        </div>
+        <div id="issued-key-box" class="hidden bg-amber-50 border border-amber-200 rounded-xl p-3 text-xs font-mono text-amber-900 break-all"></div>
+        <div class="bg-slate-50 border border-slate-200 rounded-xl p-3 flex flex-wrap items-center justify-between gap-2 text-xs">
+          <div>
+            <span class="font-bold text-slate-900">📚 Ubuntu Archive Baseline (2004–2025+, <code>ls-lR</code>):</span>
+            <span class="text-slate-600">3,452,795 packages/files • 94,053 dirs • 7.713 TB • 140 distro tracks</span>
+          </div>
+          <span class="px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200 font-bold text-[11px]">0 Permission Anomalies</span>
+        </div>
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <div>
+            <h3 class="text-xs font-semibold uppercase text-slate-500 mb-2">Registered Client Keys (SHA-256 Hashed)</h3>
+            <div id="watchdog-clients-list" class="space-y-1.5 max-h-48 overflow-y-auto text-xs"></div>
+          </div>
+          <div>
+            <h3 class="text-xs font-semibold uppercase text-slate-500 mb-2">Watchdog Security Alerts</h3>
+            <div id="watchdog-alerts-list" class="space-y-1.5 max-h-48 overflow-y-auto text-xs"></div>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <!-- TAB 5: CLOUD SDK & API -->
+    <div id="tab-panel-sdk" class="tab-panel hidden space-y-5">
+      <section class="bg-white border border-slate-200 shadow-sm rounded-2xl p-6 space-y-5">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          <div>
+            <h2 class="text-lg font-bold text-slate-900">AtAA CROW Chain — Cloud SDK &amp; API</h2>
+            <p class="text-xs text-slate-500">Drop-in browser SDK connecting 24/7 to your Supabase Cloud CROW Chain node (no local PC required).</p>
+          </div>
+          <div class="flex flex-wrap gap-2">
+            <button onclick="pingCloudSdk()" class="px-3 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-sm">Ping Live Cloud Node</button>
+            <a href="crow_sdk.js" download="crow_sdk.js" class="px-3 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold shadow-sm">Download crow_sdk.js ↓</a>
+          </div>
+        </div>
+
+        <div id="sdk-ping-box" class="hidden bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs font-mono"></div>
+
+        <div class="bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-2">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-bold uppercase text-slate-600">Cloud Endpoint</span>
+            <button onclick="copyText('https://urfhlxdlanncpfqtdkvb.supabase.co/functions/v1/crow-chain', 'Cloud URL')" class="text-xs font-semibold text-indigo-600 hover:underline">Copy URL</button>
+          </div>
+          <code class="block text-xs font-mono text-indigo-700 break-all">https://urfhlxdlanncpfqtdkvb.supabase.co/functions/v1/crow-chain</code>
+        </div>
+
+        <div class="space-y-2">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-bold uppercase text-slate-600">Quick Drop-In Snippet (MandalOz 3D / A-Stack'd / Web Games)</span>
+            <button onclick="copySnippet()" class="text-xs font-semibold text-indigo-600 hover:underline">Copy Snippet</button>
+          </div>
+          <pre id="sdk-snippet" class="bg-slate-900 text-slate-100 rounded-xl p-4 text-xs font-mono overflow-x-auto leading-relaxed">&lt;script src="/crow_sdk.js"&gt;&lt;/script&gt;
+&lt;script&gt;
+  // 1. Create or load a player wallet on CROW Chain (24/7 Cloud)
+  const w = await CrowChain.createWallet("MandalOz Player #1");
+
+  // 2. Reward CROW when player completes a quest
+  await CrowChain.reward(w.address, 25, "MandalOz 3D", "Boss Defeated");
+
+  // 3. Spend CROW in the in-game shop
+  await CrowChain.spend(w.address, 10, "MandalOz 3D", "Sword Upgrade");
+
+  // 4. Verify CROW Chain integrity anytime
+  const check = await CrowChain.verifyChain();
+&lt;/script&gt;</pre>
+        </div>
+      </section>
+    </div>
+
+    <!-- TAB 6: TALK TO KIT -->
+    <div id="tab-panel-kit" class="tab-panel hidden space-y-5">
+      <section class="bg-white border border-slate-200 shadow-sm rounded-2xl p-6 space-y-4 max-w-4xl">
+        <div class="flex flex-wrap items-center justify-between gap-2">
+          <div>
+            <div class="flex flex-wrap items-center gap-2">
+              <h2 class="text-lg font-bold text-slate-900">Talk to Kit — Your Wallet &amp; Oracle Copilot</h2>
+              <span id="kit-wallet-badge" class="px-2.5 py-0.5 text-[11px] font-mono font-bold rounded-full bg-indigo-50 text-indigo-700 border border-indigo-200">Wallet-Exclusive</span>
+            </div>
+            <p class="text-xs text-slate-500">Wallet-exclusive copilot: asks your spend budget before trading, tracks open targets, and never pools across wallets.</p>
+          </div>
+          <div class="flex flex-wrap gap-1.5">
+            <button onclick="quickKitPrompt('What trades are coming up and why?')" class="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-[11px] font-semibold border border-slate-200">Upcoming Trades?</button>
+            <button onclick="quickKitPrompt('What is my expected outcome?')" class="px-2.5 py-1 rounded-lg bg-amber-50 hover:bg-amber-100 text-amber-800 text-[11px] font-bold border border-amber-200">Expected Outcomes?</button>
+            <button onclick="quickKitPrompt('Check my wallet balance')" class="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-[11px] font-semibold border border-slate-200">Check Balance</button>
+            <button onclick="quickKitPrompt('Run auto trade now')" class="px-2.5 py-1 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-700 text-[11px] font-bold border border-emerald-200">Run Auto Trade</button>
+            <button onclick="quickKitPrompt('Verify chain and watchdog')" class="px-2.5 py-1 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-[11px] font-bold border border-indigo-200">Verify Chain</button>
+            <button onclick="clearKitChat()" class="px-2.5 py-1 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-700 text-[11px] font-semibold border border-rose-200">Clear Chat</button>
+          </div>
+        </div>
+
+        <div id="kit-chat-log" class="bg-slate-50 border border-slate-200 rounded-xl p-4 h-72 overflow-y-auto space-y-2.5 text-xs">
+          <div class="bg-white border border-slate-200 rounded-xl p-3 max-w-2xl">
+            <div class="font-bold text-indigo-700 mb-0.5">Kit (AgentKit Copilot)</div>
+            <div class="text-slate-700">Hey! I'm connected to your live WallStreet/FinAI signals, active test wallet, and CROW Chain Watchdog. Ask me anything or tell me to run a test trade.</div>
+          </div>
+        </div>
+
+        <div class="flex gap-2">
+          <input id="kit-chat-input" type="text" placeholder="Ask Kit anything (e.g. 'Why ETH?', 'run auto trade', 'check my wallet')..." onkeydown="if(event.key==='Enter') sendKitChat()" class="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm text-slate-900" />
+          <button onclick="sendKitChat()" class="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-sm shadow-sm">Send</button>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <script>
+    let STATE = null;
+    let CONNECTED_ADDR = "";
+
+    function showStatus(msg, ok = true) {
+      const el = document.getElementById("status-msg");
+      el.textContent = msg;
+      el.className = `text-xs font-medium rounded-xl p-3 ${ok ? "bg-emerald-50 text-emerald-800 border border-emerald-200" : "bg-rose-50 text-rose-800 border border-rose-200"}`;
+      el.classList.remove("hidden");
+    }
+
+    function switchTab(name) {
+      document.querySelectorAll(".tab-panel").forEach(p => p.classList.add("hidden"));
+      document.querySelectorAll(".tab-btn").forEach(b => {
+        b.className = "tab-btn px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold bg-slate-50 text-slate-600 hover:bg-slate-100 border border-slate-200 transition";
+      });
+      const panel = document.getElementById(`tab-panel-${name}`);
+      const btn = document.getElementById(`tab-btn-${name}`);
+      if (panel) panel.classList.remove("hidden");
+      if (btn) btn.className = "tab-btn px-4 py-2 rounded-xl text-xs sm:text-sm font-bold bg-indigo-600 text-white shadow-sm transition";
+    }
+
+    const CLOUD_NODE_URL = "https://urfhlxdlanncpfqtdkvb.supabase.co/functions/v1/crow-chain";
+    const IS_CLOUD_DIRECT = window.location.protocol === "file:";
+
+    async function api(path, method = "GET", body = null) {
+      const target = IS_CLOUD_DIRECT
+        ? `${CLOUD_NODE_URL}${path.replace(/^\/api/, "")}`
+        : path;
+      const opts = { method, headers: {} };
+      if (body) {
+        opts.headers["Content-Type"] = "application/json";
+        opts.body = JSON.stringify(body);
+      }
+      const r = await fetch(target, opts);
+      return await r.json();
+    }
+
+    async function refreshState() {
+      STATE = await api("/api/state");
+      if (!STATE.ok) return;
+      document.getElementById("treasury-addr").textContent = STATE.treasuryAddress;
+      const badge = document.getElementById("cdp-badge");
+      badge.textContent = IS_CLOUD_DIRECT
+        ? "24/7 Cloud Mode (No Local Server)"
+        : (STATE.cdpConfigured ? "CDP Keys Loaded" : "Testnet + Paper Mode (CDP Optional)");
+
+      const pg = document.getElementById("price-grid");
+      pg.innerHTML = "";
+      for (const sym of ["ETH", "BTC", "SOL", "POL", "USDC", "CROW"]) {
+        const val = STATE.prices?.[sym];
+        pg.innerHTML += `
+          <div class="bg-slate-50 border border-slate-200 rounded-xl p-3">
+            <div class="text-xs text-slate-500 font-semibold">${sym}/USD</div>
+            <div class="text-base font-extrabold text-slate-900 mt-0.5">${val != null ? "$" + Number(val).toLocaleString(undefined, { maximumFractionDigits: 4 }) : "--"}</div>
+          </div>`;
+      }
+
+      const sel = document.getElementById("wallet-select");
+      const gsel = document.getElementById("global-wallet-select");
+      const prev = sel.value || gsel?.value;
+      sel.innerHTML = "";
+      if (gsel) gsel.innerHTML = "";
+      for (const acc of (STATE.accounts || [])) {
+        const tag = acc.address === STATE.treasuryAddress ? " [TREASURY]" : acc.client_id ? ` [${acc.client_id}]` : "";
+        const label = `${acc.address.slice(0, 10)}...${acc.address.slice(-6)}${tag} (${Number(acc.crow_balance || 0).toFixed(0)} CROW)`;
+        const opt = document.createElement("option");
+        opt.value = acc.address;
+        opt.textContent = label;
+        sel.appendChild(opt);
+        if (gsel) gsel.appendChild(opt.cloneNode(true));
+      }
+      if (prev && [...sel.options].some(o => o.value === prev)) sel.value = prev;
+      if (gsel) gsel.value = sel.value;
+      onWalletSelect();
+
+      if (STATE.policy) {
+        document.getElementById("kill-switch").checked = !!STATE.policy.kill_switch;
+        document.getElementById("pol-max").value = STATE.policy.max_trade_usd ?? 50;
+        document.getElementById("pol-daily").value = STATE.policy.daily_limit_usd ?? 200;
+      }
+
+      const tl = document.getElementById("trades-list");
+      tl.innerHTML = (STATE.paperTrades || []).map(t => `
+        <div class="bg-slate-50 border border-slate-200 rounded-lg p-2.5 flex justify-between items-center">
+          <div>
+            <span class="font-bold ${t.side === 'BUY' ? 'text-emerald-600' : 'text-amber-600'}">${t.side}</span>
+            <span class="font-semibold text-slate-900">${Number(t.asset_qty).toFixed(5)} ${t.asset}</span>
+            <div class="text-[11px] text-slate-500">@ $${Number(t.asset_price_usd).toLocaleString()} • Block #${t.block_number ?? '?'} • ${t.outcome || 'WATCHING'}</div>
+          </div>
+          <div class="font-bold text-slate-900">$${Number(t.usd_amount).toFixed(2)}</div>
+        </div>
+      `).join("") || `<div class="text-slate-500">No paper trades yet.</div>`;
+
+      const bl = document.getElementById("blocks-list");
+      bl.innerHTML = (STATE.blocks || []).map(b => `
+        <div class="bg-slate-50 border border-slate-200 rounded-lg p-2.5">
+          <div class="flex justify-between">
+            <span class="text-emerald-700 font-bold">Block #${b.block_number}</span>
+            <span class="text-slate-500">nonce ${b.nonce}</span>
+          </div>
+          <div class="text-[11px] text-slate-500 truncate">${b.block_hash}</div>
+        </div>
+      `).join("");
+
+      const tkg = document.getElementById("tokenomics-grid");
+      if (tkg) {
+        tkg.innerHTML = (STATE.tokenomics || []).map(p => `
+          <div class="bg-slate-50 border border-slate-200 rounded-xl p-2.5">
+            <div class="text-[11px] font-semibold text-slate-500 uppercase">${p.pool_name.replace("_", " ")}</div>
+            <div class="text-sm font-extrabold text-amber-600 mt-0.5">${Number(p.remaining_crow || 0).toLocaleString()} CROW</div>
+            <div class="text-[10px] text-slate-400">of ${Number(p.allocated_crow || 0).toLocaleString()}</div>
+          </div>
+        `).join("") || `<div class="text-slate-500">No pools loaded.</div>`;
+      }
+
+      const sg = document.getElementById("signals-grid");
+      sg.innerHTML = (STATE.signals || []).map(s => {
+        const badgeCls = s.action === "BUY" ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+          : s.action === "SELL" ? "bg-rose-50 text-rose-700 border-rose-200"
+          : "bg-slate-100 text-slate-600 border-slate-200";
+        const btn = s.action !== "HOLD"
+          ? `<button onclick="executeSignal('${s.action}','${s.asset}',${s.suggestedUsd || 15})" class="px-3 py-1 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold shadow-sm">Run ${s.action} ($${s.suggestedUsd || 15})</button>`
+          : `<span class="text-[11px] text-slate-400">Waiting for setup</span>`;
+        return `
+          <div class="bg-slate-50 border border-slate-200 rounded-xl p-3.5 space-y-2">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-2">
+                <span class="font-extrabold text-sm text-slate-900">${s.asset}/USD</span>
+                <span class="px-2 py-0.5 text-[11px] font-bold rounded border ${badgeCls}">${s.action} (${s.confidence || 0}%)</span>
+              </div>
+              ${btn}
+            </div>
+            <div class="text-xs text-slate-700">${s.rationale || ''}</div>
+            <div class="text-[11px] text-slate-500 font-mono">
+              Price: $${Number(s.priceUsd || 0).toLocaleString()} • 7h SMA: $${Number(s.sma7 || 0).toLocaleString()} • 24h SMA: $${Number(s.sma24 || 0).toLocaleString()} • RSI-14: ${s.rsi14 ?? '--'}
+            </div>
+          </div>`;
+      }).join("") || `<div class="text-xs text-slate-500">Scanning market candles...</div>`;
+
+      // Watchdog
+      const wcl = document.getElementById("watchdog-clients-list");
+      if (wcl) {
+        wcl.innerHTML = (STATE.watchdog?.clients || []).map(c => `
+          <div class="bg-slate-50 border border-slate-200 rounded-lg p-2 flex justify-between items-center">
+            <div><span class="font-bold text-slate-900">${c.client_name}</span> <code class="text-[11px] text-indigo-600">${c.key_prefix}</code></div>
+            <span class="text-[11px] font-semibold text-emerald-700">${c.active ? "ACTIVE" : "REVOKED"} • max ${c.max_reward_crow} CROW</span>
+          </div>
+        `).join("") || `<div class="text-slate-500">No client keys issued yet.</div>`;
+      }
+      const wal = document.getElementById("watchdog-alerts-list");
+      if (wal) {
+        wal.innerHTML = (STATE.watchdog?.alerts || []).map(a => `
+          <div class="bg-slate-50 border border-slate-200 rounded-lg p-2">
+            <div class="flex justify-between">
+              <span class="font-bold ${a.severity === 'HIGH' || a.severity === 'CRITICAL' ? 'text-rose-600' : a.severity === 'MEDIUM' ? 'text-amber-600' : 'text-indigo-600'}">${a.severity}</span>
+              <span class="text-[10px] text-slate-400">${a.route || ''}</span>
+            </div>
+            <div class="text-slate-700">${a.message}</div>
+          </div>
+        `).join("") || `<div class="text-slate-500">No Watchdog alerts recorded — chain clean.</div>`;
+      }
+    }
+
+    async function issueClientKey() {
+      const clientName = document.getElementById("client-key-name").value.trim() || "MandalOz 3D Client";
+      const res = await api("/api/watchdog/client_key", "POST", { clientName, maxRewardCrow: 100 });
+      const box = document.getElementById("issued-key-box");
+      if (res.ok) {
+        box.classList.remove("hidden");
+        box.textContent = `Save this one-time key for ${res.clientName}: ${res.apiKey}`;
+        document.getElementById("client-key-name").value = "";
+        await refreshState();
+      } else {
+        showStatus(res.error || "Failed to issue client key", false);
+      }
+    }
+
+    async function executeSignal(side, asset, usd) {
+      document.getElementById("trade-side").value = side;
+      document.getElementById("trade-asset").value = asset;
+      document.getElementById("trade-usd").value = usd;
+      await runPaperTrade();
+    }
+
+    async function testGameCrow(isReward) {
+      const address = document.getElementById("wallet-select").value;
+      const gameName = document.getElementById("game-bridge-select")?.value || "MandalOz 3D";
+      const endpoint = isReward ? "/api/game/reward" : "/api/game/spend";
+      const res = await api(endpoint, "POST", {
+        address,
+        crowAmount: isReward ? 25 : 10,
+        gameName,
+        reason: isReward ? "Quest Victory Reward" : "In-Game Item Purchase"
+      });
+      if (res.ok) {
+        showStatus(`${isReward ? '+25' : '-10'} CROW synced (${gameName}, New: ${res.newCrowBalance} CROW) • Block #${res.block.block_number}`, true);
+        await refreshState();
+      } else {
+        showStatus(res.error || "Game CROW action failed", false);
+      }
+    }
+
+    function syncGlobalWallet(addr) {
+      const sel = document.getElementById("wallet-select");
+      if (sel && addr) {
+        sel.value = addr;
+        onWalletSelect();
+      }
+    }
+
+    function renderOutcomeWatcher(addr) {
+      const owg = document.getElementById("outcome-watcher-grid");
+      const osb = document.getElementById("outcome-stats-bar");
+      if (!owg) return;
+      const allWalletTrades = (STATE?.paperTrades || []).filter(t => !addr || t.wallet_address === addr);
+      if (osb) {
+        const watchingCnt = allWalletTrades.filter(t => (t.outcome || "WATCHING") === "WATCHING").length;
+        const winCnt = allWalletTrades.filter(t => t.outcome === "TARGET_HIT").length;
+        const lossCnt = allWalletTrades.filter(t => t.outcome === "STOP_HIT").length;
+        const netPnl = allWalletTrades.reduce((acc, t) => {
+          if (t.pnl_usd != null) return acc + Number(t.pnl_usd);
+          const entry = Number(t.asset_price_usd || 0);
+          const live = Number(STATE?.prices?.[t.asset] || entry);
+          const dir = t.side === 'BUY' ? 1 : -1;
+          const pct = entry > 0 ? ((live - entry) / entry) * 100 * dir : 0;
+          return acc + (Number(t.usd_amount || 0) * pct / 100);
+        }, 0);
+        osb.innerHTML = `
+          <div class="bg-amber-50 border border-amber-200 rounded-lg px-2.5 py-1.5"><span class="text-slate-500">Watching:</span> <strong class="text-amber-700">${watchingCnt}</strong></div>
+          <div class="bg-emerald-50 border border-emerald-200 rounded-lg px-2.5 py-1.5"><span class="text-slate-500">Targets Hit:</span> <strong class="text-emerald-700">${winCnt}</strong></div>
+          <div class="bg-rose-50 border border-rose-200 rounded-lg px-2.5 py-1.5"><span class="text-slate-500">Stops Hit:</span> <strong class="text-rose-700">${lossCnt}</strong></div>
+          <div class="bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1.5"><span class="text-slate-500">Net P&amp;L:</span> <strong class="${netPnl >= 0 ? 'text-emerald-600' : 'text-rose-600'}">${netPnl >= 0 ? '+' : ''}$${netPnl.toFixed(2)}</strong></div>
+        `;
+      }
+      const walletTrades = allWalletTrades.slice(0, 8);
+      owg.innerHTML = walletTrades.map(t => {
+        const entry = Number(t.asset_price_usd || 0);
+        const live = Number(STATE?.prices?.[t.asset] || entry);
+        const target = Number(t.target_price_usd || (t.side === 'BUY' ? entry * 1.02 : entry * 0.98));
+        const stop = Number(t.stop_price_usd || (t.side === 'BUY' ? entry * 0.99 : entry * 1.01));
+        const dir = t.side === 'BUY' ? 1 : -1;
+        const pct = entry > 0 ? ((live - entry) / entry) * 100 * dir : 0;
+        const pnl = t.pnl_usd != null ? Number(t.pnl_usd) : (Number(t.usd_amount || 0) * pct / 100);
+        const out = t.outcome || 'WATCHING';
+        const badge = out === 'TARGET_HIT'
+          ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+          : out === 'STOP_HIT'
+            ? 'bg-rose-50 text-rose-700 border-rose-200'
+            : out === 'CLOSED_MANUAL'
+              ? 'bg-indigo-50 text-indigo-700 border-indigo-200'
+              : 'bg-amber-50 text-amber-700 border-amber-200';
+        const closeBtn = out === 'WATCHING'
+          ? `<button onclick="closeTradeNow(${t.id})" class="px-2 py-1 rounded-lg bg-slate-900 hover:bg-slate-700 text-white text-[10px] font-bold">Close Now</button>`
+          : '';
+        return `
+          <div class="bg-slate-50 border border-slate-200 rounded-xl p-2.5 flex flex-wrap items-center justify-between gap-2">
+            <div>
+              <span class="font-bold text-slate-900">${t.side} ${t.asset} ($${Number(t.usd_amount).toFixed(0)})</span>
+              <span class="ml-1.5 px-2 py-0.5 text-[10px] font-bold rounded border ${badge}">${out}</span>
+              <div class="text-[11px] text-slate-500 font-mono mt-0.5">
+                Entry $${entry.toLocaleString()} → Live $${live.toLocaleString()} • Target $${target.toLocaleString()} • Stop $${stop.toLocaleString()}
+              </div>
+            </div>
+            <div class="flex items-center gap-2">
+              <div class="font-bold text-xs ${pnl >= 0 ? 'text-emerald-600' : 'text-rose-600'}">
+                ${pnl >= 0 ? '+' : ''}$${pnl.toFixed(2)} (${pct >= 0 ? '+' : ''}${pct.toFixed(2)}%)
+              </div>
+              ${closeBtn}
+            </div>
+          </div>`;
+      }).join("") || `<div class="text-slate-500">No trades to watch for this wallet yet. Run a paper trade or Kit Auto-Trade!</div>`;
+    }
+
+    function onWalletSelect() {
+      const addr = document.getElementById("wallet-select").value;
+      const gsel = document.getElementById("global-wallet-select");
+      if (gsel && addr) gsel.value = addr;
+      const acc = (STATE?.accounts || []).find(a => a.address === addr);
+      const usdCash = acc ? (acc.balance_cents || 0) / 100 : 0;
+      const crowBal = acc ? Number(acc.crow_balance || 0) : 0;
+      document.getElementById("sel-usd").textContent = `$${usdCash.toFixed(2)}`;
+      document.getElementById("sel-crow").textContent = `${crowBal.toFixed(0)} CROW`;
+      const gUsd = document.getElementById("global-usd");
+      const gCrow = document.getElementById("global-crow");
+      if (gUsd) gUsd.textContent = `$${usdCash.toFixed(2)}`;
+      if (gCrow) gCrow.textContent = `${crowBal.toFixed(0)}`;
+      const kitBadge = document.getElementById("kit-wallet-badge");
+      if (kitBadge) kitBadge.textContent = addr ? `Locked to ${addr.slice(0, 10)}...${addr.slice(-4)} ($${usdCash.toFixed(2)})` : "Select a wallet";
+      loadWalletTargets(addr);
+      const shortEl = document.getElementById("sel-addr-short");
+      if (shortEl) shortEl.textContent = addr ? `${addr.slice(0, 12)}...${addr.slice(-8)}` : "Select a wallet";
+
+      renderOutcomeWatcher(addr);
+
+      const chatBox = document.getElementById("kit-chat-log");
+      if (chatBox && addr) {
+        if (!KIT_CHATS_BY_WALLET[addr]) {
+          KIT_CHATS_BY_WALLET[addr] = `
+            <div class="bg-white border border-slate-200 rounded-xl p-3 max-w-2xl">
+              <div class="font-bold text-indigo-700 mb-0.5">Kit (AgentKit Copilot)</div>
+              <div class="text-slate-700">Locked to wallet <code>${addr.slice(0, 10)}...${addr.slice(-6)}</code> (Test USD: $${usdCash.toFixed(2)}). This chat is wallet-exclusive—ask me about your open targets, expected outcomes, or tell me to run a trade and how much you're willing to spend.</div>
+            </div>`;
+        }
+        chatBox.innerHTML = KIT_CHATS_BY_WALLET[addr];
+        chatBox.scrollTop = chatBox.scrollHeight;
+      }
+
+      // Populate recipient selector for Send CROW
+      const recSel = document.getElementById("send-to-wallet");
+      if (recSel) {
+        const prevRec = recSel.value;
+        recSel.innerHTML = "";
+        for (const a of (STATE?.accounts || [])) {
+          if (a.address === addr) continue;
+          const opt = document.createElement("option");
+          opt.value = a.address;
+          opt.textContent = `${a.address.slice(0, 10)}...${a.address.slice(-6)} (${Number(a.crow_balance || 0).toFixed(0)} CROW)`;
+          recSel.appendChild(opt);
+        }
+        if (prevRec && [...recSel.options].some(o => o.value === prevRec)) recSel.value = prevRec;
+      }
+
+      // Render per-token holdings + quick Buy/Sell buttons
+      const listEl = document.getElementById("wallet-assets-list");
+      const holdings = (STATE?.holdings && STATE.holdings[addr]) || {};
+      const prices = STATE?.prices || {};
+      let totalVal = usdCash + crowBal * Number(prices.CROW || 0);
+
+      if (listEl) {
+        const assets = ["ETH", "BTC", "SOL", "POL", "CROW"];
+        listEl.innerHTML = assets.map(sym => {
+          const price = Number(prices[sym] || 0);
+          const qty = sym === "CROW"
+            ? crowBal + Math.max(0, Number(holdings.CROW || 0))
+            : Math.max(0, Number(holdings[sym] || 0));
+          const val = sym === "CROW" ? Math.max(0, Number(holdings.CROW || 0)) * price : qty * price;
+          if (sym !== "CROW") totalVal += val;
+          return `
+            <div class="bg-slate-50 border border-slate-200 rounded-xl p-3 flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <div class="font-extrabold text-sm text-slate-900">${sym} <span class="text-xs font-normal text-slate-500">@ $${price.toLocaleString(undefined, { maximumFractionDigits: 4 })}</span></div>
+                <div class="text-xs text-slate-600 font-mono">${qty.toFixed(sym === 'CROW' ? 2 : 6)} ${sym} • $${(qty * price).toFixed(2)}</div>
+              </div>
+              <div class="flex items-center gap-1.5">
+                <button onclick="walletQuickTrade('BUY','${sym}',10)" class="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-sm">Buy $10</button>
+                <button onclick="walletQuickTrade('SELL','${sym}',10)" class="px-3 py-1.5 rounded-lg bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 text-xs font-bold">Sell $10</button>
+              </div>
+            </div>`;
+        }).join("");
+      }
+      const totEl = document.getElementById("sel-total-usd");
+      if (totEl) totEl.textContent = `$${totalVal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    }
+
+    function copySelectedWallet() {
+      const addr = document.getElementById("wallet-select").value;
+      if (addr) copyText(addr, "Wallet address");
+    }
+
+    async function walletQuickTrade(side, asset, usdAmount) {
+      const address = document.getElementById("wallet-select").value;
+      const res = await api("/api/agent/paper_trade", "POST", { address, side, asset, usdAmount });
+      if (res.ok) {
+        showStatus(`${side} ${res.qty.toFixed(6)} ${asset} @ $${res.priceUsd} — Mined Block #${res.block.block_number}`, true);
+        await refreshState();
+      } else {
+        showStatus(res.error || "Trade failed", false);
+      }
+    }
+
+    async function sendCrowTransfer() {
+      const fromAddress = document.getElementById("wallet-select").value;
+      const toAddress = document.getElementById("send-to-wallet").value;
+      const crowAmount = parseFloat(document.getElementById("send-crow-amt").value || "25");
+      const res = await api("/api/wallets/transfer", "POST", { fromAddress, toAddress, crowAmount });
+      if (res.ok) {
+        showStatus(`Sent ${crowAmount} CROW to ${toAddress.slice(0, 10)}... • Mined Block #${res.block.block_number}`, true);
+        await refreshState();
+      } else {
+        showStatus(res.error || "Transfer failed", false);
+      }
+    }
+
+    async function createTestWallet() {
+      const label = document.getElementById("new-wallet-label").value.trim() || "Game Test Wallet";
+      const res = await api("/api/wallets/create", "POST", { label });
+      if (res.ok) {
+        document.getElementById("new-wallet-label").value = "";
+        showStatus(`Created ${res.address.slice(0, 12)}... (+500 CROW & +$100) • Mined Block #${res.block.block_number}`, true);
+        await refreshState();
+        document.getElementById("wallet-select").value = res.address;
+        onWalletSelect();
+      } else {
+        showStatus(res.error || "Failed to create wallet", false);
+      }
+    }
+
+    async function dripFaucet() {
+      const address = document.getElementById("wallet-select").value;
+      const res = await api("/api/wallets/faucet", "POST", { address, crowAmount: 250, usdCents: 5000 });
+      if (res.ok) {
+        showStatus(`Faucet sent +250 CROW & +$50.00! Mined Block #${res.block.block_number}`, true);
+        await refreshState();
+      } else {
+        showStatus(res.error || "Faucet failed", false);
+      }
+    }
+
+    function getWalletTargets() {
+      const targetPct = Math.max(0.1, parseFloat(document.getElementById("trade-target-pct")?.value || "2") || 2);
+      const stopPct = Math.max(0.1, parseFloat(document.getElementById("trade-stop-pct")?.value || "1") || 1);
+      return { targetPct, stopPct };
+    }
+    function saveWalletTargets() {
+      const addr = document.getElementById("wallet-select")?.value;
+      if (!addr) return;
+      try {
+        const all = JSON.parse(localStorage.getItem("crow_wallet_targets_v1") || "{}");
+        all[addr] = getWalletTargets();
+        localStorage.setItem("crow_wallet_targets_v1", JSON.stringify(all));
+      } catch {}
+    }
+    function loadWalletTargets(addr) {
+      let t = { targetPct: 2, stopPct: 1 };
+      try {
+        const all = JSON.parse(localStorage.getItem("crow_wallet_targets_v1") || "{}");
+        if (addr && all[addr]) t = all[addr];
+      } catch {}
+      const tp = document.getElementById("trade-target-pct");
+      const sp = document.getElementById("trade-stop-pct");
+      if (tp) tp.value = t.targetPct ?? 2;
+      if (sp) sp.value = t.stopPct ?? 1;
+    }
+
+    async function runPaperTrade() {
+      const address = document.getElementById("wallet-select").value;
+      const side = document.getElementById("trade-side").value;
+      const asset = document.getElementById("trade-asset").value;
+      const usdAmount = parseFloat(document.getElementById("trade-usd").value || "10");
+      const { targetPct, stopPct } = getWalletTargets();
+      const res = await api("/api/agent/paper_trade", "POST", { address, side, asset, usdAmount, targetPct, stopPct });
+      if (res.ok) {
+        showStatus(`${side} ${res.qty.toFixed(6)} ${asset} @ $${res.priceUsd} (+${targetPct}% / -${stopPct}%) — Mined Block #${res.block.block_number}`, true);
+        await refreshState();
+      } else {
+        showStatus(res.error || "Trade blocked", false);
+      }
+    }
+
+    async function savePolicy() {
+      await api("/api/agent/policy", "POST", {
+        killSwitch: document.getElementById("kill-switch").checked,
+        maxTradeUsd: parseFloat(document.getElementById("pol-max").value || "50"),
+        dailyLimitUsd: parseFloat(document.getElementById("pol-daily").value || "200")
+      });
+      showStatus("SentryGuard policy updated in Supabase.", true);
+    }
+
+    async function connectBrowserWallet() {
+      if (!window.ethereum) {
+        showStatus("Install MetaMask or Coinbase Wallet browser extension to connect.", false);
+        return;
+      }
+      const accounts = await window.ethereum.request({ method: "eth_requestAccounts" });
+      CONNECTED_ADDR = accounts[0];
+      document.getElementById("browser-wallet-bar").classList.remove("hidden");
+      document.getElementById("bw-address").textContent = CONNECTED_ADDR;
+      document.getElementById("btn-connect-wallet").textContent = `${CONNECTED_ADDR.slice(0, 6)}...${CONNECTED_ADDR.slice(-4)}`;
+      const bal = await api(`/api/sepolia/balance?address=${encodeURIComponent(CONNECTED_ADDR)}`);
+      document.getElementById("bw-eth").textContent = bal.ok ? `${Number(bal.eth).toFixed(5)} ETH` : "Error";
+    }
+
+    async function switchToBaseSepolia() {
+      if (!window.ethereum) return showStatus("No browser wallet detected.", false);
+      try {
+        await window.ethereum.request({ method: "wallet_switchEthereumChain", params: [{ chainId: "0x14a34" }] });
+      } catch (err) {
+        if (err.code === 4902) {
+          await window.ethereum.request({
+            method: "wallet_addEthereumChain",
+            params: [{
+              chainId: "0x14a34",
+              chainName: "Base Sepolia Testnet",
+              nativeCurrency: { name: "Sepolia ETH", symbol: "ETH", decimals: 18 },
+              rpcUrls: ["https://sepolia.base.org"],
+              blockExplorerUrls: ["https://sepolia.basescan.org"]
+            }]
+          });
+        }
+      }
+    }
+
+    async function importBrowserWallet() {
+      if (!CONNECTED_ADDR) return;
+      const res = await api("/api/wallets/create", "POST", { address: CONNECTED_ADDR, label: "Browser Wallet" });
+      if (res.ok) {
+        showStatus(`Synced ${CONNECTED_ADDR.slice(0, 10)}... to Supabase (Block #${res.block.block_number})`, true);
+        await refreshState();
+        document.getElementById("wallet-select").value = CONNECTED_ADDR;
+        onWalletSelect();
+      }
+    }
+
+    async function verifyChainIntegrity() {
+      const box = document.getElementById("chain-stress-box");
+      box.classList.remove("hidden");
+      box.innerHTML = `<span class="text-slate-500">Verifying all blocks in Supabase...</span>`;
+      const res = await api("/api/chain/verify");
+      if (!res.ok) {
+        box.innerHTML = `<span class="text-rose-600">Verify error: ${res.error}</span>`;
+        return;
+      }
+      box.innerHTML = `
+        <div class="${res.valid ? "text-emerald-700" : "text-rose-600"} font-bold">
+          Chain Integrity: ${res.valid ? "VALID" : "BROKEN"} (${res.totalBlocks} blocks checked in ${res.checkMs} ms)
+        </div>
+        <div class="text-slate-600 break-all">Latest Block #${res.latestBlockNumber}: ${res.latestBlockHash}</div>`;
+    }
+
+    async function runStressTest(txCount = 5000) {
+      const box = document.getElementById("chain-stress-box");
+      box.classList.remove("hidden");
+      box.innerHTML = `<span class="text-indigo-700">Simulating ${txCount.toLocaleString()} hashed transactions, building Merkle tree &amp; mining rollup block...</span>`;
+      const res = await api("/api/chain/stress_test", "POST", { txCount, anchorBlock: true });
+      if (!res.ok) {
+        box.innerHTML = `<span class="text-rose-600">Stress test error: ${res.error}</span>`;
+        return;
+      }
+      const blk = res.anchoredBlock;
+      const integ = res.integrity || {};
+      box.innerHTML = `
+        <div class="text-emerald-700 font-bold">
+          Simulated ${res.txCount.toLocaleString()} tx in ${res.simMs} ms (${res.txPerSec.toLocaleString()} tx/sec)
+        </div>
+        <div class="text-indigo-700 break-all">Merkle Root (depth ${res.treeDepth}): ${res.merkleRoot}</div>
+        <div class="text-slate-700 break-all">Anchored in Block #${blk.block_number} (nonce ${blk.nonce}): ${blk.block_hash}</div>
+        <div class="${integ.valid ? "text-emerald-700" : "text-rose-600"}">Chain Integrity: ${integ.valid ? "VALID" : "BROKEN"} (${integ.totalBlocks} total blocks)</div>`;
+      await refreshState();
+    }
+
+    async function pingCloudSdk() {
+      const box = document.getElementById("sdk-ping-box");
+      box.classList.remove("hidden");
+      box.innerHTML = `<span class="text-slate-500">Pinging live Supabase Cloud CROW Chain node...</span>`;
+      try {
+        const r = await fetch("https://urfhlxdlanncpfqtdkvb.supabase.co/functions/v1/crow-chain/verify");
+        const data = await r.json();
+        box.innerHTML = `
+          <div class="text-emerald-700 font-bold">Cloud Node Online • Chain ${data.valid ? "VALID" : "CHECK"} (${data.totalBlocks} blocks, ${data.checkMs} ms)</div>
+          <div class="text-slate-600 break-all">Latest Block #${data.latestBlockNumber}: ${data.latestBlockHash}</div>`;
+      } catch (err) {
+        box.innerHTML = `<span class="text-rose-600">Ping failed: ${err}</span>`;
+      }
+    }
+
+    function copyText(txt, label) {
+      navigator.clipboard.writeText(txt);
+      showStatus(`${label} copied to clipboard.`, true);
+    }
+
+    function copySnippet() {
+      const txt = document.getElementById("sdk-snippet").textContent;
+      copyText(txt, "SDK snippet");
+    }
+
+    const KIT_CHATS_BY_WALLET = (() => {
+      try { return JSON.parse(localStorage.getItem("crow_kit_chats_v1") || "{}"); } catch { return {}; }
+    })();
+    function saveKitChats() {
+      try { localStorage.setItem("crow_kit_chats_v1", JSON.stringify(KIT_CHATS_BY_WALLET)); } catch {}
+    }
+    function clearKitChat() {
+      const addr = document.getElementById("wallet-select")?.value;
+      if (!addr) return;
+      delete KIT_CHATS_BY_WALLET[addr];
+      saveKitChats();
+      onWalletSelect();
+      showStatus(`Cleared Kit chat history for ${addr.slice(0, 10)}...`, true);
+    }
+    let KIT_AUTO_TIMER = null;
+    async function runKitAutoTrade() {
+      const address = document.getElementById("wallet-select").value;
+      const log = document.getElementById("kit-auto-log");
+      log.textContent = "Kit is scanning WallStreet/FinAI signals...";
+      const { targetPct, stopPct } = getWalletTargets();
+      const res = await api("/api/agent/auto_trade", "POST", { address, targetPct, stopPct });
+      if (res.ok && res.executed) {
+        log.innerHTML = `<span class="text-emerald-700 font-semibold">${res.kitMessage}</span>`;
+        showStatus(res.kitMessage, true);
+        await refreshState();
+      } else if (res.ok) {
+        log.textContent = res.message || "Kit chose HOLD.";
+      } else {
+        log.innerHTML = `<span class="text-rose-600">${res.error || "Auto-trade blocked"}</span>`;
+      }
+    }
+
+    function toggleKitAutoLoop() {
+      const on = document.getElementById("kit-auto-loop").checked;
+      if (KIT_AUTO_TIMER) { clearInterval(KIT_AUTO_TIMER); KIT_AUTO_TIMER = null; }
+      if (on) {
+        runKitAutoTrade();
+        KIT_AUTO_TIMER = setInterval(runKitAutoTrade, 30000);
+        showStatus("Kit Auto-Loop enabled (scanning & trading every 30s).", true);
+      } else {
+        showStatus("Kit Auto-Loop paused.", true);
+      }
+    }
+
+    function appendKitBubble(sender, text, isUser = false, walletAddr = null) {
+      const box = document.getElementById("kit-chat-log");
+      const activeAddr = document.getElementById("wallet-select")?.value;
+      const targetAddr = walletAddr || activeAddr;
+      const div = document.createElement("div");
+      div.className = isUser
+        ? "bg-indigo-600 text-white rounded-xl p-3 max-w-xl ml-auto"
+        : "bg-white border border-slate-200 text-slate-800 rounded-xl p-3 max-w-2xl";
+      div.innerHTML = `<div class="font-bold text-[11px] mb-0.5 ${isUser ? 'text-indigo-100' : 'text-indigo-700'}">${sender}</div><div>${text}</div>`;
+      if (targetAddr && targetAddr !== activeAddr) {
+        const tmp = document.createElement("div");
+        tmp.innerHTML = KIT_CHATS_BY_WALLET[targetAddr] || "";
+        tmp.appendChild(div);
+        KIT_CHATS_BY_WALLET[targetAddr] = tmp.innerHTML;
+        saveKitChats();
+        return;
+      }
+      box.appendChild(div);
+      box.scrollTop = box.scrollHeight;
+      if (targetAddr) {
+        KIT_CHATS_BY_WALLET[targetAddr] = box.innerHTML;
+        saveKitChats();
+      }
+    }
+
+    function quickKitPrompt(q) {
+      document.getElementById("kit-chat-input").value = q;
+      sendKitChat();
+    }
+
+    async function sendKitChat() {
+      const input = document.getElementById("kit-chat-input");
+      const msg = input.value.trim();
+      if (!msg) return;
+      input.value = "";
+      const address = document.getElementById("wallet-select").value;
+      appendKitBubble("You", msg, true, address);
+      const { targetPct, stopPct } = getWalletTargets();
+      const res = await api("/api/agent/chat", "POST", { message: msg, address, targetPct, stopPct });
+      appendKitBubble("Kit (AgentKit Copilot)", res.reply || res.error || "No response.", false, address);
+      if (res.actionTaken) await refreshState();
+    }
+
+    async function exportWalletReport(format) {
+      const addr = document.getElementById("wallet-select")?.value;
+      if (!addr) { showStatus("Select a wallet first to export its report.", false); return; }
+      const acc = (STATE?.accounts || []).find(a => a.address === addr);
+      const trades = (STATE?.paperTrades || []).filter(t => t.wallet_address === addr);
+      const dateTag = new Date().toISOString().slice(0, 10);
+      const prefix = addr.slice(0, 10);
+
+      let content = "";
+      let mime = "text/plain;charset=utf-8";
+      let filename = `crow_report_${prefix}_${dateTag}.${format}`;
+
+      if (format === "csv") {
+        const headers = ["TradeID","CreatedAt","Wallet","Side","Asset","USDAmount","AssetQty","EntryPriceUSD","TargetPriceUSD","StopPriceUSD","Outcome","ExitPriceUSD","PnLUSD","BlockNumber","TxHash"];
+        const esc = v => `"${String(v ?? "").replace(/"/g, '""')}"`;
+        const rows = trades.map(t => [
+          t.id, t.created_at, t.wallet_address, t.side, t.asset, t.usd_amount, t.asset_qty,
+          t.asset_price_usd, t.target_price_usd ?? "", t.stop_price_usd ?? "",
+          t.outcome || "WATCHING", t.exit_price_usd ?? "", t.pnl_usd ?? "", t.block_number ?? "", t.tx_hash ?? ""
+        ].map(esc).join(","));
+        content = [headers.join(","), ...rows].join("\n");
+        mime = "text/csv;charset=utf-8";
+        filename = `crow_trades_${prefix}_${dateTag}.csv`;
+      } else {
+        const verify = await api("/api/verify").catch(() => ({ ok: false }));
+        const netPnlUsd = trades.reduce((s, t) => s + Number(t.pnl_usd ?? 0), 0);
+        const report = {
+          generatedAt: new Date().toISOString(),
+          wallet: {
+            address: addr,
+            testUsd: acc ? Number(((acc.balance_cents || 0) / 100).toFixed(2)) : 0,
+            crowBalance: acc ? Number(acc.crow_balance || 0) : 0,
+            holdings: (STATE?.holdings && STATE.holdings[addr]) || {},
+          },
+          summary: {
+            totalTrades: trades.length,
+            watching: trades.filter(t => (t.outcome || "WATCHING") === "WATCHING").length,
+            targetsHit: trades.filter(t => t.outcome === "TARGET_HIT").length,
+            stopsHit: trades.filter(t => t.outcome === "STOP_HIT").length,
+            closedManual: trades.filter(t => t.outcome === "CLOSED_MANUAL").length,
+            realizedPnlUsd: Number(netPnlUsd.toFixed(4)),
+          },
+          chainIntegrity: verify,
+          trades,
+          recentBlocks: (STATE?.blocks || []).slice(0, 10),
+        };
+        content = JSON.stringify(report, null, 2);
+        mime = "application/json;charset=utf-8";
+        filename = `crow_audit_${prefix}_${dateTag}.json`;
+      }
+
+      const blob = new Blob([content], { type: mime });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+      showStatus(`Exported ${filename} (${trades.length} trade(s) for ${prefix}...).`, true);
+    }
+
+    async function closeTradeNow(tradeId) {
+      const address = document.getElementById("wallet-select").value;
+      const res = await api("/api/agent/close_trade", "POST", { tradeId, address });
+      if (res.ok) {
+        const sign = res.pnlUsd >= 0 ? "+" : "";
+        showStatus(`Closed ${res.side} ${res.asset} @ $${res.exit} (${sign}$${Number(res.pnlUsd).toFixed(2)}) — Block #${res.block.block_number}`, true);
+        await refreshState();
+      } else {
+        showStatus(res.error || "Could not close trade", false);
+      }
+    }
+
+    async function checkTradeOutcomes(silent = false) {
+      const res = await api("/api/agent/watch_trades");
+      if (res.ok) {
+        const count = (res.settled || []).length;
+        if (count > 0 || !silent) {
+          showStatus(count > 0 ? `Settled ${count} trade(s) on CROW Chain!` : "All open trades checked against live prices — still watching.", true);
+        }
+        await refreshState();
+      }
+    }
+
+    refreshState();
+    setInterval(refreshState, 15000);
+    setInterval(() => {
+      if (document.getElementById("auto-watch-toggle")?.checked) checkTradeOutcomes(true);
+    }, 30000);
+  </script>
+</body>
+</html>
