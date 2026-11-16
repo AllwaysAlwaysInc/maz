@@ -6,3 +6,7 @@ dist/
 .env
 crow_archive_index.db
 .DS_Store
+public/models/meshy/Meshy_AI_AtAA_Invoker_to_infi_1115232505_texture.glb
+public/models/meshy/Meshy_AI_AtAA_Invoker_to_infi_1115232547_texture.glb
+public/models/meshy/Meshy_AI_AtAA_Invoker_to_infi_1115232601_texture.glb
+public/models/meshy/Meshy_AI_AtAA_Invoker_to_infi_1115232649_texture.glb
