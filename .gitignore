@@ -1,11 +1,8 @@
-.env
-.env.*
-*.db
-*.sqlite
-downloads/
 __pycache__/
 *.pyc
+*.pyo
+dist/
+*.zip
+.env
+crow_archive_index.db
 .DS_Store
-Thumbs.db
-allways-agentkit-wallet/
-

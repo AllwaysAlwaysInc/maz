@@ -4,7 +4,13 @@
  * Connects 24/7 to the live Supabase Edge Function node (no local PC required).
  */
 (function (global) {
-  const DEFAULT_CLOUD_URL = "https://urfhlxdlanncpfqtdkvb.supabase.co/functions/v1/crow-chain";
+  const isLocalServer =
+    typeof window !== "undefined" &&
+    (window.location.hostname === "127.0.0.1" || window.location.hostname === "localhost") &&
+    window.location.port === "8910";
+  const DEFAULT_CLOUD_URL = isLocalServer
+    ? `${window.location.origin}/api`
+    : "https://urfhlxdlanncpfqtdkvb.supabase.co/functions/v1/crow-chain";
 
   class CrowChainClient {
     constructor(baseUrl = DEFAULT_CLOUD_URL) {
@@ -49,10 +55,27 @@
     async runStressTest(txCount = 5000, anchorBlock = true) {
       return await this._req("/stress_test", "POST", { txCount, anchorBlock });
     }
+
+    async getAuctions() {
+      return await this._req("/auction/list", "GET");
+    }
+
+    async listAuction(seller, itemName, minBidCrow = 10, tier = "Tier 3 • Rare", itemData = null) {
+      return await this._req("/auction/list", "POST", { seller, itemName, minBidCrow, tier, itemData });
+    }
+
+    async bidAuction(auctionId, bidder, bidCrow) {
+      return await this._req("/auction/bid", "POST", { auctionId, bidder, bidCrow });
+    }
+
+    async settleAuction(auctionId) {
+      return await this._req("/auction/settle", "POST", { auctionId });
+    }
   }
 
   global.CrowChain = new CrowChainClient();
   global.CrowChainClient = CrowChainClient;
-  global.NovaSDK = global.CrowChain;
+  global.MazChain = global.CrowChain;
+  global.AtAAChain = global.CrowChain;
   global.CrowCoin = global.CrowChain;
 })(typeof window !== "undefined" ? window : globalThis);

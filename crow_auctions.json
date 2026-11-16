@@ -1,0 +1,122 @@
+[
+  {
+    "auction_id": "auc_1794841040_2b1514",
+    "seller": "0xF21905EE23f7A8B66d4cda83C0Dec3EA8258B2Bd",
+    "item_name": "Dewdrop Triad",
+    "tier": "Tier 2 \u2022 UNCOMMON \u2022 3x/Day Morning Drop",
+    "item_data": {
+      "id": 41040244,
+      "name": "Dewdrop Triad",
+      "tier": 2,
+      "rarity": "uncommon",
+      "pattern": "triangular",
+      "elements": [
+        "water",
+        "earth"
+      ],
+      "fusionPower": 135,
+      "marketValue": 150,
+      "autoDropSlot": "morning"
+    },
+    "min_bid_crow": 85.0,
+    "current_bid_crow": 85.0,
+    "highest_bidder": null,
+    "bid_count": 0,
+    "status": "active",
+    "auto_bot": true,
+    "bot_slot": "morning",
+    "block_number": 117,
+    "tx_hash": "27e79f2e8d41b2b8fc741911bc6e2226c969b25b83a455fde66296d85ebe35ec",
+    "created_at": "2026-11-16T14:57:22.349840+00:00"
+  },
+  {
+    "auction_id": "auc_1794787202_7db775",
+    "seller": "0xF21905EE23f7A8B66d4cda83C0Dec3EA8258B2Bd",
+    "item_name": "Twilight Eclipse Lotus",
+    "tier": "Tier 3 \u2022 EPIC \u2022 3x/Day Evening Drop",
+    "item_data": {
+      "id": 87202145,
+      "name": "Twilight Eclipse Lotus",
+      "tier": 3,
+      "rarity": "epic",
+      "pattern": "pentagonal",
+      "elements": [
+        "shadow",
+        "spirit"
+      ],
+      "fusionPower": 265,
+      "marketValue": 300,
+      "autoDropSlot": "evening"
+    },
+    "min_bid_crow": 180.0,
+    "current_bid_crow": 180.0,
+    "highest_bidder": null,
+    "bid_count": 0,
+    "status": "active",
+    "auto_bot": true,
+    "bot_slot": "evening",
+    "block_number": 108,
+    "tx_hash": "b1894d78ea555ecac8b0717fe15b0a06000dbe994e033f075bb5fd2c04b89a82",
+    "created_at": "2026-11-16T00:00:05.503818+00:00"
+  },
+  {
+    "auction_id": "auc_1794781171_fda23b",
+    "seller": "0xF21905EE23f7A8B66d4cda83C0Dec3EA8258B2Bd",
+    "item_name": "Zenith Prism Hexagon",
+    "tier": "Tier 2 \u2022 RARE \u2022 3x/Day Midday Drop",
+    "item_data": {
+      "id": 81171668,
+      "name": "Zenith Prism Hexagon",
+      "tier": 2,
+      "rarity": "rare",
+      "pattern": "hexagonal",
+      "elements": [
+        "fire",
+        "air"
+      ],
+      "fusionPower": 190,
+      "marketValue": 200,
+      "autoDropSlot": "midday"
+    },
+    "min_bid_crow": 120.0,
+    "current_bid_crow": 120.0,
+    "highest_bidder": null,
+    "bid_count": 0,
+    "status": "active",
+    "auto_bot": true,
+    "bot_slot": "midday",
+    "block_number": 92,
+    "tx_hash": "539a47de5ff2bd6ace17b5d9276abbc06e9122f6fe9f6f51186f47e10b1bf630",
+    "created_at": "2026-11-15T22:19:33.881550+00:00"
+  },
+  {
+    "auction_id": "auc_1794781140_49040e",
+    "seller": "0xF21905EE23f7A8B66d4cda83C0Dec3EA8258B2Bd",
+    "item_name": "Solar Dawn Octagon",
+    "tier": "Tier 2 \u2022 UNCOMMON \u2022 3x/Day Morning Drop",
+    "item_data": {
+      "id": 81140080,
+      "name": "Solar Dawn Octagon",
+      "tier": 2,
+      "rarity": "uncommon",
+      "pattern": "octagonal",
+      "elements": [
+        "light",
+        "fire"
+      ],
+      "fusionPower": 145,
+      "marketValue": 150,
+      "autoDropSlot": "morning"
+    },
+    "min_bid_crow": 90.0,
+    "current_bid_crow": 90.0,
+    "highest_bidder": null,
+    "bid_count": 0,
+    "status": "active",
+    "auto_bot": true,
+    "bot_slot": "morning",
+    "block_number": 91,
+    "tx_hash": "5fa71e2cfd81cad079f4e6717176bf8d476590a4a37433422044b00e1036cacf",
+    "created_at": "2026-11-15T22:19:01.650330+00:00"
+  }
+]

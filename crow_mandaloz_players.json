@@ -1,0 +1,164 @@
+{
+  "0x449e6a362fac5871cdaf231c4fce85c5e37ed877": {
+    "address": "0x449e6a362fac5871cdaf231c4fce85c5e37ed877",
+    "username": "Player-449e6a",
+    "level": 4,
+    "xp": 680,
+    "fusionShards": 20,
+    "wins": 0,
+    "energy": 7,
+    "energyDate": "2026-11-16",
+    "dailyRewardDate": "2026-11-16",
+    "dailyRewardCrow": 0,
+    "pouch": {
+      "id": "pouch_cloth_1",
+      "name": "Cloth Starter Pouch",
+      "tier": 1,
+      "rarity": "common",
+      "capacity": 6
+    },
+    "pouches": [],
+    "materials": {
+      "timber": 2,
+      "ore": 20,
+      "leather": 2,
+      "herbs": 1,
+      "essence": 10
+    },
+    "pendingMints": [],
+    "abilities": [],
+    "gear": [
+      {
+        "id": 1794799185507,
+        "category": "gear",
+        "slotType": "head",
+        "name": "RARE Crown of Embers",
+        "rarity": "rare",
+        "powerBonus": 14,
+        "desc": "+14 Pwr"
+      },
+      {
+        "id": 1794799227242,
+        "category": "gear",
+        "slotType": "chest",
+        "name": "MYTHIC Aegis Plate",
+        "rarity": "mythic",
+        "powerBonus": 65,
+        "desc": "+65 Pwr"
+      },
+      {
+        "id": 1794799246041,
+        "category": "gear",
+        "slotType": "head",
+        "name": "COMMON Crown of Embers",
+        "rarity": "common",
+        "powerBonus": 6,
+        "desc": "+6 Pwr"
+      }
+    ],
+    "consumables": [],
+    "mounts": [],
+    "houses": [],
+    "familiars": [],
+    "eggs": [],
+    "wildEncounter": null,
+    "ringShards": 21,
+    "trialsCleared": [],
+    "rings": [
+      {
+        "id": "ring_starter_1",
+        "name": "Cracked Starter Ring",
+        "slots": 2,
+        "brokenSlots": 1,
+        "bound": [
+          null,
+          "BROKEN"
+        ]
+      }
+    ],
+    "petDen": null,
+    "battleBoost": 0,
+    "equipped": {
+      "mandala": 1794787749545,
+      "pouch": "pouch_cloth_1",
+      "ability": null,
+      "head": null,
+      "chest": null,
+      "boots": null,
+      "weapon": null,
+      "quiver": null,
+      "mount": null,
+      "familiarRing": null,
+      "familiar": null
+    },
+    "collection": [
+      {
+        "id": 1001,
+        "name": "Circle of Beginnings",
+        "tier": 1,
+        "rarity": "common",
+        "pattern": "circular",
+        "elements": [
+          "earth"
+        ],
+        "fusionPower": 65,
+        "marketValue": 35,
+        "mintBlock": 106,
+        "txHash": "4bdcd0df3a7e5d676600f59cf6669a981cc15592a320938aa2a322f6339682f4"
+      },
+      {
+        "id": 1794787749545,
+        "name": "Light Triangular",
+        "tier": 2,
+        "rarity": "rare",
+        "pattern": "triangular",
+        "elements": [
+          "light"
+        ],
+        "fusionPower": 198,
+        "marketValue": 90,
+        "mintBlock": 109,
+        "txHash": "78e75df2f09646804c34b8d551148eff8d83795c030a58edc7a645f034fa67b9"
+      },
+      {
+        "id": 1794799147802,
+        "name": "Fire Octagonal",
+        "tier": 3,
+        "rarity": "legendary",
+        "pattern": "octagonal",
+        "elements": [
+          "fire"
+        ],
+        "fusionPower": 460,
+        "marketValue": 300
+      },
+      {
+        "id": 1794799148181,
+        "name": "Shadow Square",
+        "tier": 3,
+        "rarity": "rare",
+        "pattern": "square",
+        "elements": [
+          "shadow"
+        ],
+        "fusionPower": 162,
+        "marketValue": 90
+      }
+    ],
+    "realmHarvests": {},
+    "stats": {
+      "mints": 1,
+      "fuses": 0,
+      "auctions": 0,
+      "realms": 0,
+      "dungeons": 0,
+      "raids": 0,
+      "shrineMints": 0
+    },
+    "claimedChallenges": [
+      "mint_1"
+    ],
+    "created_at": "2026-11-15T23:14:01.095727+00:00",
+    "updated_at": "2026-11-16T16:01:15.832111+00:00"
+  }
+}

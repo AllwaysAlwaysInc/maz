@@ -1,0 +1,6 @@
+.git/
+__pycache__/
+*.pyc
+dist/
+*.zip
+crow_archive_index.db

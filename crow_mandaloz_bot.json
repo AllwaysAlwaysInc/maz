@@ -1,0 +1,17 @@
+{
+  "enabled": true,
+  "rotationIndex": 4,
+  "scheduleTimes": {
+    "morning": "08:30",
+    "midday": "13:30",
+    "evening": "18:00"
+  },
+  "lastPostedSlots": {
+    "morning": "2026-11-16",
+    "midday": "2026-11-15",
+    "evening": "2026-11-15"
+  },
+  "dropsCount": 4,
+  "lastDropAt": "2026-11-16T14:57:22.351736+00:00",
+  "lastDropItem": "Dewdrop Triad"
+}
